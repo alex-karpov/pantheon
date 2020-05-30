@@ -100,7 +100,7 @@ class InteractiveSessionModel extends Model
      * @throws \Exception
      * @return bool
      */
-    public function endGame($gameHash)
+    public function endGame(string $gameHash)
     {
         $session = $this->_findGame($gameHash, SessionPrimitive::STATUS_INPROGRESS);
         $this->_checkAuth($session->getPlayersIds(), $session->getEventId());
@@ -116,7 +116,7 @@ class InteractiveSessionModel extends Model
      * @throws \Exception
      * @return bool
      */
-    public function cancelGame($gameHash)
+    public function cancelGame(string $gameHash)
     {
         if (!$this->checkAdminToken()) {
             throw new AuthFailedException('Only administrators are allowed to cancel games');
@@ -133,7 +133,7 @@ class InteractiveSessionModel extends Model
      * @throws \Exception
      * @return int count of finalized sessions
      */
-    public function finalizeSessions($eventId)
+    public function finalizeSessions(int $eventId)
     {
         if (!$this->checkAdminToken()) {
             throw new AuthFailedException('Only administrators are allowed to finalize sessions');
@@ -159,7 +159,7 @@ class InteractiveSessionModel extends Model
      * @throws \Exception
      * @return bool|array Success?|Results of dry run
      */
-    public function addRound($gameHashcode, $roundData, $dry = false)
+    public function addRound(string $gameHashcode, array $roundData, bool $dry = false)
     {
         $session = $this->_findGame($gameHashcode, SessionPrimitive::STATUS_INPROGRESS);
         $this->_checkAuth($session->getPlayersIds(), $session->getEventId());
@@ -280,7 +280,7 @@ class InteractiveSessionModel extends Model
      * @throws \Exception
      * @throws BadActionException
      */
-    protected function _findGame($gameHash, $withStatus)
+    protected function _findGame($gameHash, string $withStatus)
     {
         $game = SessionPrimitive::findByRepresentationalHash($this->_ds, [$gameHash]);
         if (empty($game)) {
@@ -297,10 +297,14 @@ class InteractiveSessionModel extends Model
     /**
      * @param $playersIds
      * @param $eventId
+     * @param int[] $playersIds
+     *
      * @throws AuthFailedException
      * @throws \Exception
+     *
+     * @return void
      */
-    protected function _checkAuth($playersIds, $eventId)
+    protected function _checkAuth(array $playersIds, int $eventId): void
     {
         // Check that real session player is trying to enter data
         $evMdl = new EventUserManagementModel($this->_ds, $this->_config, $this->_meta);
@@ -322,7 +326,7 @@ class InteractiveSessionModel extends Model
      * @throws InvalidParametersException
      * @return boolean
      */
-    public function dropLastRound($gameHash)
+    public function dropLastRound(string $gameHash)
     {
         if (!$this->checkAdminToken()) {
             throw new AuthFailedException('Only administrators are allowed to drop last round');
@@ -353,7 +357,7 @@ class InteractiveSessionModel extends Model
      * @param $gameHashcode
      * @return bool
      */
-    protected function _trackUpdate($gameHashcode)
+    protected function _trackUpdate(string $gameHashcode)
     {
         if (!empty($this->_config->getValue('trackerUrl'))) {
             file_get_contents(sprintf($this->_config->getValue('trackerUrl'), $gameHashcode));

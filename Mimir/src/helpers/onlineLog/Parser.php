@@ -117,14 +117,21 @@ class OnlineParser
         return [];
     }
 
-    protected function _getRiichi()
+    protected function _getRiichi(): string
     {
         $riichis = $this->_riichi;
         $this->_riichi = [];
         return implode(',', $riichis);
     }
 
-    protected function _makeScores($str)
+    /**
+     * @param null|string $str
+     *
+     * @return string[]
+     *
+     * @psalm-return array{0: string, 1: string, 2: string, 3: string}
+     */
+    protected function _makeScores(?string $str): array
     {
         $parts = explode(',', $str);
         return [
@@ -141,10 +148,13 @@ class OnlineParser
      *
      * @param \XMLReader $reader
      * @param SessionPrimitive $session
+     *
      * @throws ParseException
      * @throws \Exception
+     *
+     * @return void
      */
-    protected function _tokenUN(\XMLReader $reader, SessionPrimitive $session)
+    protected function _tokenUN(\XMLReader $reader, SessionPrimitive $session): void
     {
         if (count($this->_players) == 0) {
             $this->_players = [
@@ -183,7 +193,7 @@ class OnlineParser
         }
     }
 
-    protected function _tokenAGARI(\XMLReader $reader)
+    protected function _tokenAGARI(\XMLReader $reader): void
     {
         $winner = array_keys($this->_players)[$reader->getAttribute('who')];
         $loser = array_keys($this->_players)[$reader->getAttribute('fromWho')];
@@ -269,11 +279,14 @@ class OnlineParser
     }
 
     // round start, reset all needed things
-    protected function _tokenINIT()
+    protected function _tokenINIT(): void
     {
         $this->_lastTokenIsAgari = false; // resets double/triple ron sequence
     }
 
+    /**
+     * @return void
+     */
     protected function _tokenRYUUKYOKU(\XMLReader $reader)
     {
         $rkType = $reader->getAttribute('type');
@@ -318,6 +331,9 @@ class OnlineParser
         ];
     }
 
+    /**
+     * @return void
+     */
     protected function _tokenREACH(\XMLReader $reader)
     {
         $player = $reader->getAttribute('who');
@@ -333,11 +349,14 @@ class OnlineParser
     /**
      * @param \XMLReader $reader
      * @param SessionPrimitive $session
+     *
      * @throws EntityNotFoundException
      * @throws ParseException
      * @throws \Exception
+     *
+     * @return void
      */
-    protected function _tokenGO(\XMLReader $reader, SessionPrimitive $session)
+    protected function _tokenGO(\XMLReader $reader, SessionPrimitive $session): void
     {
         $eventLobby = $session->getEvent()->getLobbyId();
 
