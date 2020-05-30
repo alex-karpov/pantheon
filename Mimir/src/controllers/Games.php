@@ -125,7 +125,7 @@ class GamesController extends Controller
         $result = (new InteractiveSessionModel($this->_ds, $this->_config, $this->_meta))
             ->finalizeSessions($eventId);
         $this->_log->addInfo(($result ? 'Successfully finalized' : 'Failed to finalize') . ' sessions of event # ' . $eventId);
-        return $result;
+        return $result > 0;
     }
 
     /**
@@ -230,6 +230,7 @@ class GamesController extends Controller
     /**
      * Add textual log for whole game
      *
+     * @deprecated
      * @param int $eventId
      * @param string $text
      * @return bool
@@ -240,7 +241,7 @@ class GamesController extends Controller
     public function addTextLog($eventId, $text)
     {
         $this->_log->addInfo('Saving new game for event id# ' . $eventId);
-        $success = (new TextmodeSessionModel($this->_ds, $this->_config, $this->_meta))->addGame($eventId, $text);
+        $success = (new TextmodeSessionModel($this->_ds, $this->_config, $this->_meta))->addGame($eventId, $text, []);
         $this->_log->addInfo('Successfully saved game for event id# ' . $eventId);
         return $success;
     }

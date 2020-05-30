@@ -304,7 +304,7 @@ class SessionState
     }
 
     /**
-     * @return \int[]
+     * @return int[]
      */
     public function getScores()
     {
@@ -321,7 +321,7 @@ class SessionState
     }
 
     /**
-     * @return \int[]
+     * @return int[]
      */
     public function getPenalties()
     {
