@@ -765,10 +765,11 @@ class AchievementsPrimitive extends Primitive
     }
 
     /**
-     * @return void
+     * @return int|null
      */
     public function getId()
     {
         // nothing
+        return null;
     }
 }
