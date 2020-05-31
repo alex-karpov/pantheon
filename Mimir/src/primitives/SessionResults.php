@@ -56,7 +56,7 @@ class SessionResultsPrimitive extends Primitive
 
     /**
      * Local id
-     * @var int
+     * @var int|null
      */
     protected $_id;
 
@@ -66,7 +66,7 @@ class SessionResultsPrimitive extends Primitive
     protected $_eventId;
     /**
      *
-     * @var EventPrimitive
+     * @var EventPrimitive|null
      */
     protected $_event;
 
@@ -75,7 +75,7 @@ class SessionResultsPrimitive extends Primitive
      */
     protected $_sessionId;
     /**
-     * @var SessionPrimitive
+     * @var SessionPrimitive|null
      */
     protected $_session;
 
@@ -84,7 +84,7 @@ class SessionResultsPrimitive extends Primitive
      */
     protected $_playerId;
     /**
-     * @var PlayerPrimitive
+     * @var PlayerPrimitive|null
      */
     protected $_player;
 
@@ -159,15 +159,14 @@ class SessionResultsPrimitive extends Primitive
      * Find session results by players and session id
      *
      * @param DataSource $ds
-     * @param $sessionId
-     * @param $playerIds
+     * @param int $sessionId
      * @param int[] $playerIds
      *
-     * @return self|self[]
+     * @return self[]
      *
      * @throws \Exception
      *
-     * @psalm-return array<array-key, self>|self
+     * @psalm-return array<array-key, self>
      */
     public static function findByPlayersAndSession(DataSource $ds, int $sessionId, array $playerIds)
     {
@@ -183,8 +182,8 @@ class SessionResultsPrimitive extends Primitive
      */
     protected function _create()
     {
-        $sessionReuslts = $this->_ds->table(self::$_table)->create();
-        $success = $this->_save($sessionReuslts);
+        $sessionResults = $this->_ds->table(self::$_table)->create();
+        $success = $this->_save($sessionResults);
         if ($success) {
             $this->_id = $this->_ds->local()->lastInsertId();
         }
@@ -198,7 +197,7 @@ class SessionResultsPrimitive extends Primitive
     }
 
     /**
-     * @deprecated 
+     * @deprecated
      *
      * @param EventPrimitive $event
      *
@@ -219,8 +218,13 @@ class SessionResultsPrimitive extends Primitive
     public function getEvent()
     {
         if (!$this->_event) {
-            $this->_event = $this->getSession()->getEvent();
-            $this->_eventId = $this->_event->getId();
+            $event = $this->getSession()->getEvent();
+            $id = $event->getId();
+            if (!$id) {
+                throw new InvalidParametersException('Attempted to assign deidented primitive');
+            }
+            $this->_event = $event;
+            $this->_eventId = $id;
         }
         return $this->_event;
     }
@@ -239,8 +243,12 @@ class SessionResultsPrimitive extends Primitive
      */
     public function setSession(SessionPrimitive $session)
     {
+        $id = $session->getId();
+        if (!$id) {
+            throw new InvalidParametersException('Attempted to assign deidented primitive');
+        }
         $this->_session = $session;
-        $this->_sessionId = $session->getId();
+        $this->_sessionId = $id;
         $this->_eventId = $session->getEventId();
         return $this;
     }
@@ -271,7 +279,7 @@ class SessionResultsPrimitive extends Primitive
     }
 
     /**
-     * @return int
+     * @return int|null
      */
     public function getId()
     {
@@ -281,11 +289,16 @@ class SessionResultsPrimitive extends Primitive
     /**
      * @param \Mimir\PlayerPrimitive $player
      * @return SessionResultsPrimitive
+     * @throws InvalidParametersException
      */
     public function setPlayer(PlayerPrimitive $player)
     {
+        $id = $player->getId();
+        if (!$id) {
+            throw new InvalidParametersException('Attempted to assign deidented primitive');
+        }
         $this->_player = $player;
-        $this->_playerId = $player->getId();
+        $this->_playerId = $id;
         return $this;
     }
 
@@ -344,7 +357,7 @@ class SessionResultsPrimitive extends Primitive
      * @param int[] $playerIds
      * @return SessionResultsPrimitive
      */
-    public function calc(Ruleset $rules, SessionState $results, $playerIds)
+    public function calc(Ruleset $rules, SessionState $results, array $playerIds)
     {
         for ($i = 0; $i < count($playerIds); $i++) {
             if ($playerIds[$i] == $this->_playerId) {
@@ -370,16 +383,20 @@ class SessionResultsPrimitive extends Primitive
     /**
      * Sort scores while maintaining sequence of equally scored players
      *
-     * @param $playersSeq
-     * @param $scores
+     * @param array $playersSeq
+     * @param array $scores
      * @return array
      */
-    protected static function _sort($playersSeq, $scores)
+    protected static function _sort(array $playersSeq, array $scores)
     {
         $map = array_combine(
             array_values($playersSeq),
             array_values($scores)
         );
+
+        if (!$map) {
+            throw new InvalidParametersException('Cant combine inequal arrays');
+        }
 
         $result = [];
         while (count($result) < 4) {
@@ -401,13 +418,13 @@ class SessionResultsPrimitive extends Primitive
     /**
      * Calculates player place
      *
-     * @param $scoreList
-     * @param $originalPlayersSequence
      * @param int[] $scoreList
      * @param int[] $originalPlayersSequence
+     * @return array
      *
+     * @throws InvalidParametersException
      */
-    public static function calcPlacesMap(array $scoreList, array $originalPlayersSequence)
+    public static function calcPlacesMap(array $scoreList, array $originalPlayersSequence): array
     {
         $playersMap = self::_sort($originalPlayersSequence, $scoreList);
 
@@ -426,12 +443,16 @@ class SessionResultsPrimitive extends Primitive
      * Calculates rating change
      *
      * @param Ruleset $rules
-     * @param $allScores
      * @param int[] $allScores
      *
+     * @return float|int
      */
     protected function _calcRatingDelta(Ruleset $rules, array $allScores)
     {
+        if (!$this->_player) {
+            throw new InvalidParametersException('Current player not fetched, this is runtime error');
+        }
+
         $score = ($this->_player->getIsReplacement() && $rules->replacementPlayerFixedPoints() !== false)
             ? $rules->replacementPlayerFixedPoints()
             : $this->_score - ($rules->subtractStartPoints() ? $rules->startPoints() : 0);

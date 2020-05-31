@@ -133,7 +133,7 @@ class PlayerHistoryPrimitiveTest extends \PHPUnit\Framework\TestCase
             $this->_db,
             $this->_event->getId(),
             $this->_players[0]->getId()
-        );
+        )[0];
 
         $this->assertTrue($itemCopy instanceof PlayerHistoryPrimitive);
         $this->assertEquals(1700, $itemCopy->getRating());
@@ -253,7 +253,7 @@ class PlayerHistoryPrimitiveTest extends \PHPUnit\Framework\TestCase
             ->_setGamesPlayed(1)
             ->save();
 
-        $itemCopy = PlayerHistoryPrimitive::findBySession(
+        [$itemCopy] = PlayerHistoryPrimitive::findBySession(
             $this->_db,
             $this->_players[0]->getId(),
             $this->_session->getId()
