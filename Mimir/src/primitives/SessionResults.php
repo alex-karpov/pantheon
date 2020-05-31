@@ -120,7 +120,7 @@ class SessionResultsPrimitive extends Primitive
      * Find session results by event id (foreign key search)
      *
      * @param DataSource $ds
-     * @param string[] $eventIds
+     * @param int[] $eventIds
      * @throws \Exception
      * @return SessionResultsPrimitive[]
      */
@@ -133,7 +133,7 @@ class SessionResultsPrimitive extends Primitive
      * Find session results by session id (foreign key search)
      *
      * @param DataSource $ds
-     * @param string[] $sessionIds
+     * @param int[] $sessionIds
      * @throws \Exception
      * @return SessionResultsPrimitive[]
      */

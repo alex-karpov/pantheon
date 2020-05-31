@@ -108,13 +108,13 @@ class SessionPrimitive extends Primitive
 
     /**
      * tenhou game hash, for deduplication
-     * @var string
+     * @var string|null
      */
     protected $_replayHash;
 
     /**
      * Number of table in tournament
-     * @var int
+     * @var int|null
      */
     protected $_tableIndex = null;
 
@@ -505,7 +505,7 @@ class SessionPrimitive extends Primitive
     }
 
     /**
-     * @param int $tableIndex
+     * @param int|null $tableIndex
      * @return $this
      */
     public function setTableIndex($tableIndex)
@@ -515,9 +515,9 @@ class SessionPrimitive extends Primitive
     }
 
     /**
-     * @return int
+     * @return int|null
      */
-    public function getTableIndex(): int
+    public function getTableIndex()
     {
         return $this->_tableIndex;
     }
@@ -613,7 +613,7 @@ class SessionPrimitive extends Primitive
     }
 
     /**
-     * @param string $replayHash
+     * @param string|null $replayHash
      * @return $this
      */
     public function setReplayHash($replayHash)
@@ -623,7 +623,7 @@ class SessionPrimitive extends Primitive
     }
 
     /**
-     * @return string
+     * @return string|null
      */
     public function getReplayHash()
     {
@@ -674,7 +674,7 @@ class SessionPrimitive extends Primitive
      * @throws \Exception
      * @return SessionState
      */
-    public function getCurrentState()
+    public function getCurrentState(): SessionState
     {
         if (empty($this->_current)) {
             $this->_current = new SessionState(

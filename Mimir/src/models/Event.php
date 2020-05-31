@@ -36,7 +36,7 @@ class EventModel extends Model
     /**
      * Get data of players' current seating
      *
-     * @param $eventId
+     * @param int $eventId
      * @throws InvalidParametersException
      * @throws \Exception
      * @return array TODO: should it be here? Looks a bit too low-level :/
@@ -86,11 +86,10 @@ class EventModel extends Model
     /**
      * Find out currently playing tables state (for tournaments only)
      * @param integer $eventId
-     * @param bool $includeAllRounds
      * @return array
      * @throws \Exception
      */
-    public function getTablesState($eventId, $includeAllRounds = false)
+    public function getTablesState($eventId)
     {
         $reggedPlayers = PlayerRegistrationPrimitive::findRegisteredPlayersIdsByEvent($this->_ds, $eventId);
         $reggedPlayers = array_values(array_filter($reggedPlayers, function ($el) {
@@ -103,7 +102,7 @@ class EventModel extends Model
             SessionPrimitive::STATUS_INPROGRESS,
             SessionPrimitive::STATUS_PREFINISHED
         ], 0, $tablesCount);
-        return $this->_formatTablesState($lastGames, $reggedPlayers, $includeAllRounds);
+        return $this->_formatTablesState($lastGames, $reggedPlayers);
     }
 
     /**
@@ -176,11 +175,10 @@ class EventModel extends Model
     /**
      * @param SessionPrimitive[] $lastGames
      * @param array $reggedPlayers
-     * @param bool $includeAllRounds
      * @throws \Exception
      * @return array
      */
-    protected function _formatTablesState($lastGames, $reggedPlayers, $includeAllRounds = false)
+    protected function _formatTablesState($lastGames, $reggedPlayers)
     {
         $output = [];
         $playerIdMap = [];
@@ -189,8 +187,11 @@ class EventModel extends Model
         }
 
         foreach ($lastGames as $game) {
-            $rounds = RoundPrimitive::findBySessionIds($this->_ds, [$game->getId()]);
-            /** @var MultiRoundPrimitive $lastRound */
+            $gId = $game->getId();
+            if (empty($gId)) {
+                throw new InvalidParametersException('Attempted to use deidented primitive');
+            }
+            $rounds = RoundPrimitive::findBySessionIds($this->_ds, [$gId]);
             $lastRound = MultiRoundHelper::findLastRound($rounds);
 
             $output []= [
@@ -198,15 +199,18 @@ class EventModel extends Model
                 'hash' => $game->getRepresentationalHash(),
                 'penalties' => $game->getCurrentState()->getPenaltiesLog(),
                 'table_index' => $game->getTableIndex(),
-                'last_round' => ($lastRound && !$includeAllRounds) ? $this->_formatLastRound($lastRound) : [],
-                'rounds' => $includeAllRounds ? array_map([$this, '_formatLastRound'], $rounds) : [],
+                'last_round' => $lastRound ? $this->_formatLastRound($lastRound) : [],
                 'current_round' => $game->getCurrentState()->getRound(),
                 'scores' => $game->getCurrentState()->getScores(),
                 'players' => array_map(function (PlayerPrimitive $p) use (&$playerIdMap) {
+                    $pId = $p->getId();
+                    if (empty($pId)) {
+                        throw new InvalidParametersException('Attempted to use deidented primitive');
+                    }
                     return [
-                        'id' => $p->getId(),
+                        'id' => $pId,
                         // may be empty for excluded players in non-prescripted event, so it's fine.
-                        'local_id' => empty($playerIdMap[$p->getId()]) ? 0 : $playerIdMap[$p->getId()],
+                        'local_id' => empty($playerIdMap[$pId]) ? 0 : $playerIdMap[$pId],
                         'display_name' => $p->getDisplayName()
                     ];
                 }, $game->getPlayers())
@@ -217,9 +221,8 @@ class EventModel extends Model
     }
 
     /**
-     * @return (((int|string)[]|int)[]|int|string)[]
-     *
-     * @psalm-return array{outcome: string, winner?: string, loser: string, tempai?: array<array-key, int>, riichi: array<array-key, int>, nagashi?: array<array-key, int>, han?: int, fu?: int, wins?: array<array-key, array{winner: string, han: int, fu: int}>}
+     * @param RoundPrimitive $round
+     * @return array
      */
     protected function _formatLastRound(RoundPrimitive $round): array
     {
@@ -277,8 +280,8 @@ class EventModel extends Model
     /**
      * Get all events (paginated)
      *
-     * @param $limit
-     * @param $offset
+     * @param int $limit
+     * @param int $offset
      * @throws \Exception
      * @return array
      */
@@ -319,7 +322,7 @@ class EventModel extends Model
     /**
      * Get events by id list
      *
-     * @param $idList
+     * @param array $idList
      * @throws \Exception
      * @return array
      */

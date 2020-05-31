@@ -43,7 +43,7 @@ class OnlineParser
 
     /**
      * @param SessionPrimitive $session
-     * @param $content string game log xml string
+     * @param string $content game log xml string
      * @throws \Exception
      * @return array parsed score
      */
